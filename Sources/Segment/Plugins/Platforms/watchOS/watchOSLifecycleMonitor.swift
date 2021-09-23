@@ -26,18 +26,32 @@ public extension watchOSLifecycle {
     func applicationWillResignActive(watchExtension: WKExtension) { }
 }
 
-
 class watchOSLifecycleMonitor: PlatformPlugin {
     var type = PluginType.utility
     var analytics: Analytics?
     var wasBackgrounded: Bool = false
     
     private var watchExtension = WKExtension.shared()
-    private var appNotifications: [NSNotification.Name] = [WKExtension.applicationDidFinishLaunchingNotification,
-                                                           WKExtension.applicationWillEnterForegroundNotification,
-                                                           WKExtension.applicationDidEnterBackgroundNotification,
-                                                           WKExtension.applicationDidBecomeActiveNotification,
-                                                           WKExtension.applicationWillResignActiveNotification]
+
+    private var appNotifications: [NSNotification.Name] {
+        if #available(watchOS 7.0, *) {
+            return [
+                WKExtension.applicationDidFinishLaunchingNotification,
+                WKExtension.applicationWillEnterForegroundNotification,
+                WKExtension.applicationDidEnterBackgroundNotification,
+                WKExtension.applicationDidBecomeActiveNotification,
+                WKExtension.applicationWillResignActiveNotification
+            ]
+        } else {
+            return [
+                LegacyWatchLifecycleNotifier.applicationDidFinishLaunchingNotification,
+                LegacyWatchLifecycleNotifier.applicationWillEnterForegroundNotification,
+                LegacyWatchLifecycleNotifier.applicationDidEnterBackgroundNotification,
+                LegacyWatchLifecycleNotifier.applicationDidBecomeActiveNotification,
+                LegacyWatchLifecycleNotifier.applicationWillResignActiveNotification
+            ]
+        }
+    }
     
     required init() {
         watchExtension = WKExtension.shared()
@@ -46,19 +60,36 @@ class watchOSLifecycleMonitor: PlatformPlugin {
     
     @objc
     func notificationResponse(notification: NSNotification) {
-        switch (notification.name) {
-        case WKExtension.applicationDidFinishLaunchingNotification:
-            self.applicationDidFinishLaunching(notification: notification)
-        case WKExtension.applicationWillEnterForegroundNotification:
-            self.applicationWillEnterForeground(notification: notification)
-        case WKExtension.applicationDidEnterBackgroundNotification:
-            self.applicationDidEnterBackground(notification: notification)
-        case WKExtension.applicationDidBecomeActiveNotification:
-            self.applicationDidBecomeActive(notification: notification)
-        case WKExtension.applicationWillResignActiveNotification:
-            self.applicationWillResignActive(notification: notification)
-        default:
-            break
+        if #available(watchOS 7.0, *) {
+            switch (notification.name) {
+            case WKExtension.applicationDidFinishLaunchingNotification:
+                self.applicationDidFinishLaunching(notification: notification)
+            case WKExtension.applicationWillEnterForegroundNotification:
+                self.applicationWillEnterForeground(notification: notification)
+            case WKExtension.applicationDidEnterBackgroundNotification:
+                self.applicationDidEnterBackground(notification: notification)
+            case WKExtension.applicationDidBecomeActiveNotification:
+                self.applicationDidBecomeActive(notification: notification)
+            case WKExtension.applicationWillResignActiveNotification:
+                self.applicationWillResignActive(notification: notification)
+            default:
+                break
+            }
+        } else {
+            switch (notification.name) {
+            case LegacyWatchLifecycleNotifier.applicationDidFinishLaunchingNotification:
+                self.applicationDidFinishLaunching(notification: notification)
+            case LegacyWatchLifecycleNotifier.applicationWillEnterForegroundNotification:
+                self.applicationWillEnterForeground(notification: notification)
+            case LegacyWatchLifecycleNotifier.applicationDidEnterBackgroundNotification:
+                self.applicationDidEnterBackground(notification: notification)
+            case LegacyWatchLifecycleNotifier.applicationDidBecomeActiveNotification:
+                self.applicationDidBecomeActive(notification: notification)
+            case LegacyWatchLifecycleNotifier.applicationWillResignActiveNotification:
+                self.applicationWillResignActive(notification: notification)
+            default:
+                break
+            }
         }
     }
     

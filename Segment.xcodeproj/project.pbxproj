@@ -47,6 +47,8 @@
 		46FE4CE025A53FAD003A7362 /* Storage.swift in Sources */ = {isa = PBXBuildFile; fileRef = 46FE4CDF25A53FAD003A7362 /* Storage.swift */; };
 		46FE4CFB25A6C671003A7362 /* TestUtilities.swift in Sources */ = {isa = PBXBuildFile; fileRef = 46FE4CFA25A6C671003A7362 /* TestUtilities.swift */; };
 		46FE4D1D25A7A850003A7362 /* Storage_Tests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 46FE4D1C25A7A850003A7362 /* Storage_Tests.swift */; };
+		7C02F4A726FCE1CC00D2001C /* LegacyWatchLifecycleNotifier.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7C02F4A626FCE1CC00D2001C /* LegacyWatchLifecycleNotifier.swift */; };
+		7C23858B26FCDCA00018E120 /* SystemTarget.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7C23858A26FCDCA00018E120 /* SystemTarget.swift */; };
 		9620862C2575C0C800314F8D /* Events.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9620862B2575C0C800314F8D /* Events.swift */; };
 		96208650257AA83E00314F8D /* iOSLifecycleMonitor.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9620864F257AA83E00314F8D /* iOSLifecycleMonitor.swift */; };
 		96259F8326CEF526008AE301 /* Logger.swift in Sources */ = {isa = PBXBuildFile; fileRef = 96259F8226CEF526008AE301 /* Logger.swift */; };
@@ -143,6 +145,8 @@
 		46FE4CDF25A53FAD003A7362 /* Storage.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Storage.swift; sourceTree = "<group>"; };
 		46FE4CFA25A6C671003A7362 /* TestUtilities.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TestUtilities.swift; sourceTree = "<group>"; };
 		46FE4D1C25A7A850003A7362 /* Storage_Tests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Storage_Tests.swift; sourceTree = "<group>"; };
+		7C02F4A626FCE1CC00D2001C /* LegacyWatchLifecycleNotifier.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LegacyWatchLifecycleNotifier.swift; sourceTree = "<group>"; };
+		7C23858A26FCDCA00018E120 /* SystemTarget.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = SystemTarget.swift; sourceTree = "<group>"; };
 		9620862B2575C0C800314F8D /* Events.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Events.swift; sourceTree = "<group>"; };
 		962086482579CCC200314F8D /* Cocoa.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Cocoa.framework; path = System/Library/Frameworks/Cocoa.framework; sourceTree = SDKROOT; };
 		9620864F257AA83E00314F8D /* iOSLifecycleMonitor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = iOSLifecycleMonitor.swift; sourceTree = "<group>"; };
@@ -202,6 +206,7 @@
 			children = (
 				465879B82686560C00180335 /* watchOSDelegation.swift */,
 				465879B92686560C00180335 /* watchOSLifecycleMonitor.swift */,
+				7C02F4A626FCE1CC00D2001C /* LegacyWatchLifecycleNotifier.swift */,
 				460227412612987300A9E913 /* watchOSLifecycleEvents.swift */,
 			);
 			path = watchOS;
@@ -298,6 +303,7 @@
 				96259F8226CEF526008AE301 /* Logger.swift */,
 				96C33A9B25880A5E00F3D538 /* SegmentLogger.swift */,
 				96259F8526CF1D45008AE301 /* ConsoleTarget.swift */,
+				7C23858A26FCDCA00018E120 /* SystemTarget.swift */,
 			);
 			path = Logger;
 			sourceTree = "<group>";
@@ -540,7 +546,9 @@
 				A31A16B225781CB400C9CDDF /* JSON.swift in Sources */,
 				46022771261F7A4800A9E913 /* Atomic.swift in Sources */,
 				46F7485D26C718710042798E /* ObjCAnalytics.swift in Sources */,
+				7C02F4A726FCE1CC00D2001C /* LegacyWatchLifecycleNotifier.swift in Sources */,
 				A3471FBE256487F000965480 /* Configuration.swift in Sources */,
+				7C23858B26FCDCA00018E120 /* SystemTarget.swift in Sources */,
 				OBJ_23 /* Analytics.swift in Sources */,
 				A31A16342576B7AF00C9CDDF /* Types.swift in Sources */,
 				46A018DA25E97FDF00F9CCD8 /* AppleUtils.swift in Sources */,
@@ -776,7 +784,7 @@
 				SWIFT_VERSION = 5.0;
 				TVOS_DEPLOYMENT_TARGET = 11.0;
 				USE_HEADERMAP = NO;
-				WATCHOS_DEPLOYMENT_TARGET = 7.1;
+				WATCHOS_DEPLOYMENT_TARGET = 6.0;
 			};
 			name = Debug;
 		};
@@ -849,7 +857,7 @@
 				SWIFT_VERSION = 5.0;
 				TVOS_DEPLOYMENT_TARGET = 11.0;
 				USE_HEADERMAP = NO;
-				WATCHOS_DEPLOYMENT_TARGET = 7.1;
+				WATCHOS_DEPLOYMENT_TARGET = 6.0;
 			};
 			name = Release;
 		};
