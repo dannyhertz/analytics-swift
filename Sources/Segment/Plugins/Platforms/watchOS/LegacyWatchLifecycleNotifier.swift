@@ -16,23 +16,23 @@ public struct LegacyWatchLifecycleNotifier {
         self.notificationCenter = notificationCenter
     }
 
-    public func applicationDidFinishLaunchingNotification() {
+    public func applicationDidFinishLaunching() {
         notificationCenter.post(.init(name: Self.applicationDidFinishLaunchingNotification))
     }
 
-    public func applicationDidBecomeActiveNotification() {
+    public func applicationDidBecomeActive() {
         notificationCenter.post(.init(name: Self.applicationDidBecomeActiveNotification))
     }
 
-    public func applicationWillResignActiveNotification() {
+    public func applicationWillResignActive() {
         notificationCenter.post(.init(name: Self.applicationWillResignActiveNotification))
     }
 
-    public func applicationWillEnterForegroundNotification() {
+    public func applicationWillEnterForeground() {
         notificationCenter.post(.init(name: Self.applicationWillEnterForegroundNotification))
     }
 
-    public func applicationDidEnterBackgroundNotification() {
+    public func applicationDidEnterBackground() {
         notificationCenter.post(.init(name: Self.applicationDidEnterBackgroundNotification))
     }
 
