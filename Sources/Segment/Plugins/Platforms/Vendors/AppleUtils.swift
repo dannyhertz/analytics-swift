@@ -130,11 +130,7 @@ internal class watchOSVendorSystem: VendorSystem {
     }
     
     override var identifierForVendor: String? {
-        if #available(watchOS 6.2, *) {
-            return device.identifierForVendor?.uuidString
-        } else {
-            return nil
-        }
+        return device.identifierForVendor?.uuidString
     }
     
     override var systemName: String {

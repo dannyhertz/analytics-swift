@@ -212,7 +212,6 @@
 			children = (
 				465879B82686560C00180335 /* watchOSDelegation.swift */,
 				465879B92686560C00180335 /* watchOSLifecycleMonitor.swift */,
-				7C02F4A626FCE1CC00D2001C /* LegacyWatchLifecycleNotifier.swift */,
 				460227412612987300A9E913 /* watchOSLifecycleEvents.swift */,
 			);
 			path = watchOS;
@@ -557,7 +556,6 @@
 				A31A16B225781CB400C9CDDF /* JSON.swift in Sources */,
 				46022771261F7A4800A9E913 /* Atomic.swift in Sources */,
 				46F7485D26C718710042798E /* ObjCAnalytics.swift in Sources */,
-				7C02F4A726FCE1CC00D2001C /* LegacyWatchLifecycleNotifier.swift in Sources */,
 				A3471FBE256487F000965480 /* Configuration.swift in Sources */,
 				96469AF82706225900AC5772 /* SystemTarget.swift in Sources */,
 				OBJ_23 /* Analytics.swift in Sources */,
@@ -800,7 +798,7 @@
 				SWIFT_VERSION = 5.0;
 				TVOS_DEPLOYMENT_TARGET = 11.0;
 				USE_HEADERMAP = NO;
-				WATCHOS_DEPLOYMENT_TARGET = 6.0;
+				WATCHOS_DEPLOYMENT_TARGET = 7.1;
 			};
 			name = Debug;
 		};
@@ -873,7 +871,7 @@
 				SWIFT_VERSION = 5.0;
 				TVOS_DEPLOYMENT_TARGET = 11.0;
 				USE_HEADERMAP = NO;
-				WATCHOS_DEPLOYMENT_TARGET = 6.0;
+				WATCHOS_DEPLOYMENT_TARGET = 7.1;
 			};
 			name = Release;
 		};
