@@ -38,9 +38,10 @@ extension ObjCAnalytics {
 
     /// Associate a user with their unique ID and record traits about them.
     /// - Parameters:
-    ///   - userId: A database ID (or email address) for this user. If you don't have a userId
-    ///     but want to record traits, you should pass nil. For more information on how we
-    ///     generate the UUID and Apple's policies on IDs, see https://segment.io/libraries/ios#ids
+    ///   - userId: A database ID (or email address) for this user.
+    ///     For more information on how we generate the UUID and Apple's policies on IDs, see
+    ///     https://segment.io/libraries/ios#ids
+    /// In the case when user logs out, make sure to call ``reset()`` to clear user's identity info.
     @objc(identify:)
     public func identify(userId: String) {
         identify(userId: userId, traits: nil)
@@ -48,10 +49,11 @@ extension ObjCAnalytics {
 
     /// Associate a user with their unique ID and record traits about them.
     /// - Parameters:
-    ///   - userId: A database ID (or email address) for this user. If you don't have a userId
-    ///     but want to record traits, you should pass nil. For more information on how we
-    ///     generate the UUID and Apple's policies on IDs, see https://segment.io/libraries/ios#ids
+    ///   - userId: A database ID (or email address) for this user.
+    ///     For more information on how we generate the UUID and Apple's policies on IDs, see
+    ///     https://segment.io/libraries/ios#ids
     ///   - traits: A dictionary of traits you know about the user. Things like: email, name, plan, etc.
+    /// In the case when user logs out, make sure to call ``reset()`` to clear user's identity info.
     @objc(identify:traits:)
     public func identify(userId: String, traits: [String: Any]?) {
         analytics.identify(userId: userId, traits: traits)
@@ -98,6 +100,14 @@ extension ObjCAnalytics {
     @objc(group:traits:)
     public func group(groupId: String, traits: [String: Any]?) {
         analytics.group(groupId: groupId, traits: traits)
+    }
+    
+    @objc(alias:)
+    /// The alias method is used to merge two user identities, effectively connecting two sets of user data
+    /// as one. This is an advanced method, but it is required to manage user identities successfully in some of our destinations.
+    /// - Parameter newId: The new id replacing the old user id.
+    public func alias(newId: String) {
+        analytics.alias(newId: newId)
     }
 }
 

@@ -86,7 +86,7 @@ final class Analytics_Tests: XCTestCase {
         UserDefaults.standard.removePersistentDomain(forName: "com.segment.storage.test")
         
         let expectation = XCTestExpectation(description: "MyDestination Expectation")
-        let myDestination = MyDestination {
+        let myDestination = MyDestination(disabled: true) {
             expectation.fulfill()
             return true
         }
@@ -100,8 +100,9 @@ final class Analytics_Tests: XCTestCase {
         
         analytics.track(name: "testDestinationEnabled")
         
-        XCTExpectFailure()
-        wait(for: [expectation], timeout: 1.0)
+        XCTExpectFailure {
+            wait(for: [expectation], timeout: 1.0)
+        }
     }
     #endif
     
@@ -319,8 +320,8 @@ final class Analytics_Tests: XCTestCase {
         analytics.track(name: "test")
         
         let newBatchCount = analytics.storage.eventFiles(includeUnfinished: true).count
-        // 1 new temp file, and 1 new finished file.
-        XCTAssertTrue(newBatchCount == currentBatchCount + 2)
+        // 1 new temp file
+        XCTAssertTrue(newBatchCount == currentBatchCount + 1, "New Count (\(newBatchCount)) should be \(currentBatchCount) + 1")
     }
     
     func testVersion() {
@@ -338,5 +339,56 @@ final class Analytics_Tests: XCTestCase {
         let analyticsVersion = analytics.version()
         
         XCTAssertEqual(eventVersion, analyticsVersion)
+    }
+    
+    class AnyDestination: DestinationPlugin {
+        var timeline: Timeline
+        let type: PluginType
+        let key: String
+        var analytics: Analytics?
+        
+        init(key: String) {
+            self.key = key
+            self.type = .destination
+            self.timeline = Timeline()
+        }
+    }
+
+    func testDestinationMetadata() {
+        let analytics = Analytics(configuration: Configuration(writeKey: "test"))
+        let mixpanel = AnyDestination(key: "Mixpanel")
+        let outputReader = OutputReaderPlugin()
+        
+        // we want the output reader on the segment plugin
+        // cuz that's the only place the metadata is getting added.
+        let segmentDest = analytics.find(pluginType: SegmentDestination.self)
+        segmentDest?.add(plugin: outputReader)
+
+        analytics.add(plugin: mixpanel)
+        var settings = Settings(writeKey: "123")
+        let integrations = try? JSON([
+            "Segment.io": JSON([
+                "unbundledIntegrations":
+                    [
+                        "Customer.io",
+                        "Mixpanel",
+                        "Amplitude"
+                    ]
+                ]),
+            "Mixpanel": JSON(["someKey": "someVal"])
+        ])
+        settings.integrations = integrations
+        analytics.store.dispatch(action: System.UpdateSettingsAction(settings: settings))
+        
+        waitUntilStarted(analytics: analytics)
+
+        
+        analytics.track(name: "sampleEvent")
+        
+        let trackEvent: TrackEvent? = outputReader.lastEvent as? TrackEvent
+        let metadata = trackEvent?._metadata
+        
+        XCTAssertEqual(metadata?.bundled, ["Mixpanel"])
+        XCTAssertEqual(metadata?.unbundled, ["Customer.io", "Amplitude"])
     }
 }

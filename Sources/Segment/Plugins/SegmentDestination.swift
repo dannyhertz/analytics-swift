@@ -36,12 +36,12 @@ public class SegmentDestination: DestinationPlugin {
         let task: URLSessionDataTask
         // set/used via an extension in iOSLifecycleMonitor.swift
         typealias CleanupClosure = () -> Void
-        var taskID: Int = 0
         var cleanup: CleanupClosure? = nil
     }
     
     private var httpClient: HTTPClient?
     private var uploads = [UploadTaskInfo]()
+    private let uploadsQueue = DispatchQueue(label: "uploadsQueue.segment.com")
     private var storage: Storage?
     
     private var apiKey: String? = nil
@@ -57,6 +57,8 @@ public class SegmentDestination: DestinationPlugin {
         flushTimer = QueueTimer(interval: analytics.configuration.values.flushInterval) {
             self.flush()
         }
+        // Add DestinationMetadata enrichment plugin
+        add(plugin: DestinationMetadataPlugin())
     }
     
     public func update(settings: Settings, type: UpdateType) {
@@ -69,29 +71,13 @@ public class SegmentDestination: DestinationPlugin {
     }
     
     // MARK: - Event Handling Methods
-    public func identify(event: IdentifyEvent) -> IdentifyEvent? {
-        queueEvent(event: event)
-        return event
-    }
-    
-    public func track(event: TrackEvent) -> TrackEvent? {
-        queueEvent(event: event)
-        return event
-    }
-    
-    public func screen(event: ScreenEvent) -> ScreenEvent? {
-        queueEvent(event: event)
-        return event
-    }
-    
-    public func alias(event: AliasEvent) -> AliasEvent? {
-        queueEvent(event: event)
-        return event
-    }
-    
-    public func group(event: GroupEvent) -> GroupEvent? {
-        queueEvent(event: event)
-        return event
+    public func execute<T: RawEvent>(event: T?) -> T? {
+        guard let event = event else { return nil }
+        let result = process(incomingEvent: event)
+        if let r = result {
+            queueEvent(event: r)
+        }
+        return result
     }
     
     // MARK: - Abstracted Lifecycle Methods
@@ -143,6 +129,10 @@ public class SegmentDestination: DestinationPlugin {
                     }
                     
                     analytics.log(message: "Processed: \(url.lastPathComponent)")
+                    // the upload we have here has just finished.
+                    // make sure it gets removed and it's cleanup() called rather
+                    // than waiting on the next flush to come around.
+                    self.cleanupUploads()
                 }
                 // we have a legit upload in progress now, so add it to our list.
                 if let upload = uploadTask {
@@ -162,25 +152,41 @@ extension SegmentDestination {
         // lets go through and get rid of any tasks that aren't running.
         // either they were suspended because a background task took too
         // long, or the os orphaned it due to device constraints (like a watch).
-        let before = uploads.count
-        var newPending = uploads
-        newPending.removeAll { uploadInfo in
-            let shouldRemove = uploadInfo.task.state != .running
-            if shouldRemove, let cleanup = uploadInfo.cleanup {
-                cleanup()
+        uploadsQueue.sync {
+            let before = uploads.count
+            var newPending = uploads
+            newPending.removeAll { uploadInfo in
+                let shouldRemove = uploadInfo.task.state != .running
+                if shouldRemove, let cleanup = uploadInfo.cleanup {
+                    cleanup()
+                }
+                return shouldRemove
             }
-            return shouldRemove
+            uploads = newPending
+            let after = uploads.count
+            analytics?.log(message: "Cleaned up \(before - after) non-running uploads.")
         }
-        uploads = newPending
-        let after = uploads.count
-        analytics?.log(message: "Cleaned up \(before - after) non-running uploads.")
     }
     
     internal var pendingUploads: Int {
-        return uploads.count
+        var uploadsCount = 0
+        uploadsQueue.sync {
+            uploadsCount = uploads.count
+        }
+        return uploadsCount
     }
     
     internal func add(uploadTask: UploadTaskInfo) {
-        uploads.append(uploadTask)
+        uploadsQueue.sync {
+            uploads.append(uploadTask)
+        }
+    }
+}
+
+// MARK: Versioning
+
+extension SegmentDestination: VersionedPlugin {
+    public static func version() -> String {
+        return __segment_version
     }
 }

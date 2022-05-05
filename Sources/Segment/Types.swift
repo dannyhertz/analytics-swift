@@ -8,13 +8,13 @@
 import Foundation
 import Sovran
 
+// MARK: - Supplementary Types
 
-// MARK: - Event Parameter Types
-
-typealias Integrations = Codable
-typealias Properties = Codable
-typealias Traits = Codable
-
+public struct DestinationMetadata: Codable {
+    var bundled: [String] = []
+    var unbundled: [String] = []
+    var bundledIds: [String] = []
+}
 
 // MARK: - Event Types
 
@@ -28,6 +28,7 @@ public protocol RawEvent: Codable {
     var context: JSON? { get set }
     var integrations: JSON? { get set }
     var metrics: [JSON]? { get set }
+    var _metadata: DestinationMetadata? { get set }
 }
 
 public struct TrackEvent: RawEvent {
@@ -39,6 +40,7 @@ public struct TrackEvent: RawEvent {
     public var context: JSON? = nil
     public var integrations: JSON? = nil
     public var metrics: [JSON]? = nil
+    public var _metadata: DestinationMetadata? = nil
     
     public var event: String
     public var properties: JSON?
@@ -63,8 +65,10 @@ public struct IdentifyEvent: RawEvent {
     public var context: JSON? = nil
     public var integrations: JSON? = nil
     public var metrics: [JSON]? = nil
+    public var _metadata: DestinationMetadata? = nil
     
     public var traits: JSON?
+    
     
     public init(userId: String? = nil, traits: JSON? = nil) {
         self.userId = userId
@@ -86,6 +90,7 @@ public struct ScreenEvent: RawEvent {
     public var context: JSON? = nil
     public var integrations: JSON? = nil
     public var metrics: [JSON]? = nil
+    public var _metadata: DestinationMetadata? = nil
     
     public var name: String?
     public var category: String?
@@ -112,6 +117,7 @@ public struct GroupEvent: RawEvent {
     public var context: JSON? = nil
     public var integrations: JSON? = nil
     public var metrics: [JSON]? = nil
+    public var _metadata: DestinationMetadata? = nil
     
     public var groupId: String?
     public var traits: JSON?
@@ -135,6 +141,7 @@ public struct AliasEvent: RawEvent {
     public var context: JSON? = nil
     public var integrations: JSON? = nil
     public var metrics: [JSON]? = nil
+    public var _metadata: DestinationMetadata? = nil
     
     public var userId: String?
     public var previousId: String?
@@ -149,11 +156,127 @@ public struct AliasEvent: RawEvent {
     }
 }
 
+// MARK: - RawEvent conveniences
+
+internal struct IntegrationConstants {
+    static let allIntegrationsKey = "All"
+}
+
+extension RawEvent {
+    /**
+     Disable all cloud-mode integrations for this event, except for any specific keys given.
+     This will preserve any per-integration specific settings if the integration is to remain enabled.
+     - Parameters:
+        - exceptKeys: A list of integration keys to exclude from disabling.
+     */
+    public mutating func disableCloudIntegrations(exceptKeys: [String]? = nil) {
+        guard let existing = integrations?.dictionaryValue else {
+            // this shouldn't happen, might oughta log it.
+            Analytics.segmentLog(message: "Unable to get what should be a valid list of integrations from event.", kind: .error)
+            return
+        }
+        var new = [String: Any]()
+        new[IntegrationConstants.allIntegrationsKey] = false
+        if let exceptKeys = exceptKeys {
+            for key in exceptKeys {
+                if let value = existing[key], value is [String: Any] {
+                    new[key] = value
+                } else {
+                    new[key] = true
+                }
+            }
+        }
+        
+        do {
+            integrations = try JSON(new)
+        } catch {
+            // this shouldn't happen, log it.
+            Analytics.segmentLog(message: "Unable to convert list of integrations to JSON. \(error)", kind: .error)
+        }
+    }
+    
+    /**
+     Enable all cloud-mode integrations for this event, except for any specific keys given.
+     - Parameters:
+        - exceptKeys: A list of integration keys to exclude from enabling.
+     */
+    public mutating func enableCloudIntegrations(exceptKeys: [String]? = nil) {
+        var new = [String: Any]()
+        new[IntegrationConstants.allIntegrationsKey] = true
+        if let exceptKeys = exceptKeys {
+            for key in exceptKeys {
+                new[key] = false
+            }
+        }
+        
+        do {
+            integrations = try JSON(new)
+        } catch {
+            // this shouldn't happen, log it.
+            Analytics.segmentLog(message: "Unable to convert list of integrations to JSON. \(error)", kind: .error)
+        }
+    }
+    
+    /**
+     Disable a specific cloud-mode integration using it's key name.
+     - Parameters:
+        - key: The key name of the integration to disable.
+     */
+    public mutating func disableIntegration(key: String) {
+        guard let existing = integrations?.dictionaryValue else {
+            // this shouldn't happen, might oughta log it.
+            Analytics.segmentLog(message: "Unable to get what should be a valid list of integrations from event.", kind: .error)
+            return
+        }
+        // we don't really care what the value of this key was before, as
+        // a disabled one can only be false.
+        var new = existing
+        new[key] = false
+        
+        do {
+            integrations = try JSON(new)
+        } catch {
+            // this shouldn't happen, log it.
+            Analytics.segmentLog(message: "Unable to convert list of integrations to JSON. \(error)", kind: .error)
+        }
+    }
+    
+    /**
+     Enable a specific cloud-mode integration using it's key name.
+     - Parameters:
+        - key: The key name of the integration to enable.
+     */
+    public mutating func enableIntegration(key: String) {
+        guard let existing = integrations?.dictionaryValue else {
+            // this shouldn't happen, might oughta log it.
+            Analytics.segmentLog(message: "Unable to get what should be a valid list of integrations from event.", kind: .error)
+            return
+        }
+        
+        var new = existing
+        // if it's a dictionary already, it's considered enabled, so don't
+        // overwrite whatever they may have put there.  If that's not the case
+        // just set it to true since that's the only other value it could have
+        // to be considered `enabled`.
+        if (existing[key] as? [String: Any]) == nil {
+            new[key] = true
+        }
+        
+        do {
+            integrations = try JSON(new)
+        } catch {
+            // this shouldn't happen, log it.
+            Analytics.segmentLog(message: "Unable to convert list of integrations to JSON. \(error)", kind: .error)
+        }
+    }
+    
+}
+
 
 // MARK: - RawEvent data helpers
 
 extension RawEvent {
-    public mutating func applyRawEventData(event: RawEvent?) {
+    internal mutating func applyRawEventData(event: RawEvent?) {
         if let e = event {
             anonymousId = e.anonymousId
             messageId = e.messageId
@@ -161,20 +284,21 @@ extension RawEvent {
             timestamp = e.timestamp
             context = e.context
             integrations = e.integrations
+            _metadata = e._metadata
         }
     }
 
     internal func applyRawEventData(store: Store) -> Self {
         var result: Self = self
         
-        guard let system: System = store.currentState() else { return self }
         guard let userInfo: UserInfo = store.currentState() else { return self }
         
         result.anonymousId = userInfo.anonymousId
         result.userId = userInfo.userId
         result.messageId = UUID().uuidString
         result.timestamp = Date().iso8601()
-        result.integrations = system.integrations
+        result.integrations = try? JSON([String: Any]())
+        result._metadata = DestinationMetadata()
         
         return result
     }

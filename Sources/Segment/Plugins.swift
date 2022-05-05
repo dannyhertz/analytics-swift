@@ -58,6 +58,10 @@ public protocol DestinationPlugin: EventPlugin {
 
 public protocol UtilityPlugin: EventPlugin { }
 
+public protocol VersionedPlugin {
+    static func version() -> String
+}
+
 // For internal platform-specific bits
 internal protocol PlatformPlugin: Plugin { }
 
@@ -140,11 +144,6 @@ extension Analytics {
     public func add(plugin: Plugin) -> Plugin {
         plugin.configure(analytics: self)
         timeline.add(plugin: plugin)
-        if !(plugin is SegmentDestination), let destPlugin = plugin as? DestinationPlugin {
-            // need to maintain the list of integrations to inject into payload
-            store.dispatch(action: System.AddIntegrationAction(key: destPlugin.key))
-        }
-        
         return plugin
     }
     
@@ -155,9 +154,6 @@ extension Analytics {
      */
     public func remove(plugin: Plugin) {
         timeline.remove(plugin: plugin)
-        if !(plugin is SegmentDestination), let destPlugin = plugin as? DestinationPlugin {
-            store.dispatch(action: System.RemoveIntegrationAction(key: destPlugin.key))
-        }
     }
     
     public func find<T: Plugin>(pluginType: T.Type) -> T? {

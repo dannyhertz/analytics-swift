@@ -75,15 +75,21 @@ class MyDestination: DestinationPlugin {
     var analytics: Analytics?
     let trackCompletion: (() -> Bool)?
     
-    init(trackCompletion: (() -> Bool)? = nil) {
+    let disabled: Bool
+    
+    init(disabled: Bool = false, trackCompletion: (() -> Bool)? = nil) {
         self.key = "MyDestination"
         self.type = .destination
         self.timeline = Timeline()
         self.trackCompletion = trackCompletion
+        self.disabled = disabled
     }
     
     func update(settings: Settings, type: UpdateType) {
-        //
+        if disabled == false {
+            // add ourselves to the settings
+            analytics?.manuallyEnableDestination(plugin: self)
+        }
     }
     
     func track(event: TrackEvent) -> TrackEvent? {
@@ -101,6 +107,7 @@ class OutputReaderPlugin: Plugin {
     let type: PluginType
     var analytics: Analytics?
     
+    var events = [RawEvent]()
     var lastEvent: RawEvent? = nil
     
     init() {
@@ -110,6 +117,7 @@ class OutputReaderPlugin: Plugin {
     func execute<T>(event: T?) -> T? where T : RawEvent {
         lastEvent = event
         if let t = lastEvent as? TrackEvent {
+            events.append(t)
             print("EVENT: \(t.event)")
         }
         return event
